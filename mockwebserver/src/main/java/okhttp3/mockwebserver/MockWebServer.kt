@@ -331,7 +331,8 @@ class MockWebServer : ExternalResource(), Closeable {
    * @return the head of the request queue
    */
   @Throws(InterruptedException::class)
-  fun takeRequest(timeout: Long, unit: TimeUnit): RecordedRequest? = requestQueue.poll(timeout, unit)
+  fun takeRequest(timeout: Long, unit: TimeUnit): RecordedRequest? =
+      requestQueue.poll(timeout, unit)
 
   @JvmName("-deprecated_requestCount")
   @Deprecated(
@@ -1013,17 +1014,21 @@ class MockWebServer : ExternalResource(), Closeable {
       }
 
       val body = Buffer()
+      val requestLine = "$method $path HTTP/1.1"
+      var exception: IOException? = null
       if (readBody && !peek.isDuplex) {
-        val contentLengthString = headers["content-length"]
-        val byteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE
-        throttledTransfer(peek, socket, stream.getSource().buffer(),
-            body, byteCount, true)
+        try {
+          val contentLengthString = headers["content-length"]
+          val byteCount = contentLengthString?.toLong() ?: Long.MAX_VALUE
+          throttledTransfer(peek, socket, stream.getSource().buffer(),
+              body, byteCount, true)
+        } catch (e: IOException) {
+          exception = e
+        }
       }
 
-      val requestLine = "$method $path HTTP/1.1"
-      val chunkSizes = emptyList<Int>() // No chunked encoding for HTTP/2.
-      return RecordedRequest(requestLine, headers, chunkSizes, body.size, body,
-          sequenceNumber.getAndIncrement(), socket)
+      return RecordedRequest(requestLine, headers, emptyList(), body.size, body,
+          sequenceNumber.getAndIncrement(), socket, exception)
     }
 
     @Throws(IOException::class)
