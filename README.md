@@ -25,7 +25,7 @@ supports both synchronous blocking calls and async calls with callbacks.
 
 Get a URL
 ---------
-
+   Try Changed and Commit
 This program downloads a URL and prints its contents as a string. [Full source][get_example].
 
 ```java
